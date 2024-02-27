@@ -22,3 +22,11 @@ class Debugger:
             rect = surface.get_rect(topleft=(self.x, y))
             y += surface.get_size()[1]
             display.blit(surface, rect)
+
+    def draw_tiles(self, tile_size, vert_color="green", hor_color="green"):
+        screen = pygame.display.get_surface()
+        screen_size = screen.get_size()
+        for vert in range(0, screen_size[0], tile_size):
+            pygame.draw.line(screen, vert_color, (vert, 0), (vert, screen_size[1]))
+        for hor in (range(0, screen_size[1], tile_size)):
+            pygame.draw.line(screen, hor_color, (0, hor), (screen_size[0], hor))
