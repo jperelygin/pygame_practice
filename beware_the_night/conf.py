@@ -10,6 +10,9 @@ INGAME_TILE_SIZE = (80, 80)
 # player
 PLAYER_POSITION = (80, 400)
 
+# enemies
+ENEMY_POSITION = (SCREEN_WIDTH + 100, 400)
+
 # colors
 COLOR_LIGHT = "#e0f8d0"
 COLOR_MID = "#88c070"

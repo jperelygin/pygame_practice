@@ -5,6 +5,9 @@ import conf
 from Player import Player
 from Background import Background
 from Floor import Floor
+from Enemy import Fly, OneEye
+
+DEBUG = False
 
 
 class Game:
@@ -12,6 +15,15 @@ class Game:
         pygame.init()
         self.screen = pygame.display.set_mode(conf.RES)
         self.clock = pygame.time.Clock()
+        # events (timers)
+        self.background_move_event = pygame.USEREVENT + 1
+        self.floor_move_event = pygame.USEREVENT + 2
+        self.score_update = pygame.USEREVENT + 3
+        self.new_game()
+
+
+    def new_game(self):
+        # Sprite groups
         self.player = pygame.sprite.GroupSingle()
         self.player_instance = Player()
         self.player.add(self.player_instance)
@@ -19,13 +31,12 @@ class Game:
         self.background.add(Background(0))
         self.floor = pygame.sprite.Group()
         self.floor.add(Floor(0))
-        # events
-        self.background_move_event = pygame.USEREVENT + 1
-        pygame.time.set_timer(self.background_move_event, 100)
-        self.floor_move_event = pygame.USEREVENT + 2
-        pygame.time.set_timer(self.floor_move_event, 10)
-        self.score_update = pygame.USEREVENT + 3
-        pygame.time.set_timer(self.score_update, 500)
+        self.enemies = pygame.sprite.Group()
+        self.enemies.add(OneEye())
+        # Reset timers
+        pygame.time.set_timer(self.background_move_event, 0)
+        pygame.time.set_timer(self.floor_move_event, 0)
+        pygame.time.set_timer(self.score_update, 0)
 
     def move_background(self):
         for sprite in self.background.sprites():
@@ -48,20 +59,28 @@ class Game:
     def update_score(self):
         self.player_instance.score += 1
 
-    def new_game(self):
-        pass
-
     def update(self):
         pygame.display.update()
         self.clock.tick(conf.FPS)
-        pygame.display.set_caption(f"{conf.GAME_TITLE}. Score: {self.player_instance.score}")
+        if DEBUG:
+            pygame.display.set_caption(f"{conf.GAME_TITLE}. Score: {self.player_instance.score}")
+        else:
+            pygame.display.set_caption(conf.GAME_TITLE)
+        self.player.update()
+        if self.player_instance.running:
+            self.enemies.update()
 
     def check_events(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit(0)
+            # GAME START
             if pygame.key.get_pressed()[pygame.K_SPACE] and not self.player_instance.running:
+                # Activating timers
+                pygame.time.set_timer(self.background_move_event, 200)
+                pygame.time.set_timer(self.floor_move_event, 10)
+                pygame.time.set_timer(self.score_update, 500)
                 self.player_instance.running = True
             if event.type == self.background_move_event and self.player_instance.running:
                 self.move_background()
@@ -69,6 +88,9 @@ class Game:
                 self.move_floor()
             if event.type == self.score_update and self.player_instance.running:
                 self.update_score()
+            if DEBUG:
+                if pygame.key.get_pressed()[pygame.K_q]:
+                    self.new_game()
 
     def draw(self):
         self.screen.fill(conf.COLOR_DARK)
@@ -76,7 +98,7 @@ class Game:
         self.update_floor()
         self.floor.draw(self.screen)
         self.player.draw(self.screen)
-        self.player.update()
+        self.enemies.draw(self.screen)
 
     def run(self):
         while True:
@@ -86,5 +108,8 @@ class Game:
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "--DEBUG":
+            DEBUG = True
     game = Game()
     game.run()
