@@ -5,7 +5,8 @@ import conf
 from Player import Player
 from Background import Background
 from Floor import Floor
-from Enemy import Fly, OneEye
+from Enemy import Fly, OneEye, Drill
+from UI import GameState, StartMenu, RunningMenu
 
 DEBUG = False
 
@@ -23,6 +24,7 @@ class Game:
 
 
     def new_game(self):
+        self.state = GameState()
         # Sprite groups
         self.player = pygame.sprite.GroupSingle()
         self.player_instance = Player()
@@ -32,7 +34,8 @@ class Game:
         self.floor = pygame.sprite.Group()
         self.floor.add(Floor(0))
         self.enemies = pygame.sprite.Group()
-        self.enemies.add(OneEye())
+        self.enemies.add(Drill())
+        self.ui = pygame.sprite.Group()
         # Reset timers
         pygame.time.set_timer(self.background_move_event, 0)
         pygame.time.set_timer(self.floor_move_event, 0)
@@ -59,6 +62,10 @@ class Game:
     def update_score(self):
         self.player_instance.score += 1
 
+    def update_ui(self):
+        self.state.next_state()
+        self.ui.empty()
+
     def update(self):
         pygame.display.update()
         self.clock.tick(conf.FPS)
@@ -69,6 +76,15 @@ class Game:
         self.player.update()
         if self.player_instance.running:
             self.enemies.update()
+        # ui
+        if self.state.get_state() == "START":
+            self.ui.add(StartMenu())
+        if self.state.get_state() == "RUNNING":
+            self.ui.add(RunningMenu())
+            self.ui.update(self.player_instance.score)
+        if self.state.get_state() == "END":
+            pass
+
 
     def check_events(self):
         for event in pygame.event.get():
@@ -82,6 +98,7 @@ class Game:
                 pygame.time.set_timer(self.floor_move_event, 10)
                 pygame.time.set_timer(self.score_update, 500)
                 self.player_instance.running = True
+                self.update_ui()
             if event.type == self.background_move_event and self.player_instance.running:
                 self.move_background()
             if event.type == self.floor_move_event and self.player_instance.running:
@@ -97,6 +114,7 @@ class Game:
         self.background.draw(self.screen)
         self.update_floor()
         self.floor.draw(self.screen)
+        self.ui.draw(self.screen)
         self.player.draw(self.screen)
         self.enemies.draw(self.screen)
 

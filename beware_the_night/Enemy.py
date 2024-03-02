@@ -18,6 +18,18 @@ ONEEYE_SPRITE_5 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE
                                          conf.INGAME_TILE_SIZE)
 ONEEYE_SPRITE_6 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 3, 5),
                                          conf.INGAME_TILE_SIZE)
+DRILL_SPRITE_1 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 4, 0),
+                                        conf.INGAME_TILE_SIZE)
+DRILL_SPRITE_2 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 4, 1),
+                                        conf.INGAME_TILE_SIZE)
+DRILL_SPRITE_3 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 4, 2),
+                                        conf.INGAME_TILE_SIZE)
+DRILL_SPRITE_4 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 4, 3),
+                                        conf.INGAME_TILE_SIZE)
+DRILL_SPRITE_5 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 4, 4),
+                                        conf.INGAME_TILE_SIZE)
+DRILL_SPRITE_6 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 4, 5),
+                                        conf.INGAME_TILE_SIZE)
 
 
 class Enemy(pygame.sprite.Sprite):
@@ -53,4 +65,11 @@ class OneEye(Enemy):
     def __init__(self):
         self.image_array = [ONEEYE_SPRITE_1, ONEEYE_SPRITE_2, ONEEYE_SPRITE_3,
                             ONEEYE_SPRITE_4, ONEEYE_SPRITE_5, ONEEYE_SPRITE_6]
+        super().__init__(self.image_array)
+
+
+class Drill(Enemy):
+    def __init__(self):
+        self.image_array = [DRILL_SPRITE_1, DRILL_SPRITE_2, DRILL_SPRITE_3,
+                            DRILL_SPRITE_4, DRILL_SPRITE_5, DRILL_SPRITE_6]
         super().__init__(self.image_array)

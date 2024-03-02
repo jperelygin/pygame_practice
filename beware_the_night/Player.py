@@ -5,14 +5,14 @@ from spritesheet_parser import get_sprite
 
 JUMP_SPRITE = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 2, 0),
                                      conf.INGAME_TILE_SIZE)
+FALL_SPRITE = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 2, 1),
+                                     conf.INGAME_TILE_SIZE)
 
 IDLE_SPRITE_1 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 0, 0),
                                        conf.INGAME_TILE_SIZE)
 IDLE_SPRITE_2 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 0, 1),
                                        conf.INGAME_TILE_SIZE)
 IDLE_SPRITE_3 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 0, 2),
-                                       conf.INGAME_TILE_SIZE)
-IDLE_SPRITE_4 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 0, 3),
                                        conf.INGAME_TILE_SIZE)
 IDLE_SPRITES = [IDLE_SPRITE_1, IDLE_SPRITE_2, IDLE_SPRITE_3]
 
@@ -35,6 +35,7 @@ class Player(pygame.sprite.Sprite):
         self.running = False
         self.run_sprite = 0
         self.score = 0
+        self.current_position = conf.PLAYER_POSITION
 
     def run(self):
         if self.rect.bottom >= conf.PLAYER_POSITION[1]:
@@ -51,14 +52,24 @@ class Player(pygame.sprite.Sprite):
         self.image = IDLE_SPRITES[int(self.idle_sprite)]
         self.image.set_colorkey(conf.COLOR_TRANSPARENT)
 
+    def jump(self):
+        self.image = JUMP_SPRITE
+        self.image.set_colorkey(conf.COLOR_TRANSPARENT)
+        self.gravity = -20
+
+    def fall(self):
+        self.image = FALL_SPRITE
+        self.image.set_colorkey(conf.COLOR_TRANSPARENT)
+
     def input(self):
         if pygame.key.get_pressed()[pygame.K_SPACE] and self.score > 1:
             if self.running and self.rect.bottom >= conf.PLAYER_POSITION[1]:
-                self.image = JUMP_SPRITE
-                self.image.set_colorkey(conf.COLOR_TRANSPARENT)
-                self.gravity = -20
+                self.jump()
 
     def apply_gravity(self):
+        if self.rect.bottomleft[1] > self.current_position[1]:
+            self.fall()
+        self.current_position = self.rect.bottomleft
         self.gravity += 1
         self.rect.y += self.gravity
         if self.rect.bottom >= conf.PLAYER_POSITION[1]:
