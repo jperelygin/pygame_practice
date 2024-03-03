@@ -25,7 +25,10 @@ RUN_SPRITE_3 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SI
 RUN_SPRITES = [RUN_SPRITE_1, RUN_SPRITE_2, RUN_SPRITE_3]
 
 DAMAGE_SPRITE = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 2, 5),
-                                      conf.INGAME_TILE_SIZE)
+                                       conf.INGAME_TILE_SIZE)
+
+CROUCH_SPRITE = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 1, 4),
+                                       conf.INGAME_TILE_SIZE)
 
 
 class Player(pygame.sprite.Sprite):
@@ -35,11 +38,12 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(bottomleft=conf.PLAYER_POSITION)
         self.gravity = 0
         self.idle_sprite = 0
-        self.running = False
+        self.is_running = False
         self.run_sprite = 0
         self.score = 0
         self.current_position = conf.PLAYER_POSITION
         self.health = 1
+        self.is_crouching = False
 
     def run(self):
         if self.rect.bottom >= conf.PLAYER_POSITION[1]:
@@ -67,16 +71,21 @@ class Player(pygame.sprite.Sprite):
 
     def damage(self):
         self.image = DAMAGE_SPRITE
-        self.running = False
+        self.is_running = False
         self.image.set_colorkey(conf.COLOR_TRANSPARENT)
 
+    def crouch(self):
+        self.image = CROUCH_SPRITE
+        self.image.set_colorkey(conf.COLOR_TRANSPARENT)
+        self.is_crouching = True
+
     def input(self):
-        if pygame.key.get_pressed()[pygame.K_SPACE] and self.score > 1:
-            if self.running and self.rect.bottom >= conf.PLAYER_POSITION[1]:
+        if pygame.key.get_pressed()[pygame.K_w] and self.score > 1 and not self.is_crouching:
+            if self.is_running and self.rect.bottom >= conf.PLAYER_POSITION[1]:
                 self.jump()
 
     def apply_gravity(self):
-        if self.running:
+        if self.is_running:
             if self.rect.bottomleft[1] > self.current_position[1]:
                 self.fall()
             self.current_position = self.rect.bottomleft
@@ -86,8 +95,10 @@ class Player(pygame.sprite.Sprite):
             self.rect.bottom = conf.PLAYER_POSITION[1]
 
     def update(self):
-        if self.running:
+        if self.is_running and not self.is_crouching:
             self.run()
+        elif self.is_crouching:
+            self.crouch()
         else:
             self.idle()
         self.input()

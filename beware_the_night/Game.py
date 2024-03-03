@@ -10,10 +10,16 @@ from Floor import Floor
 from Enemy import Fly, OneEye, Drill, Slime, Bat
 from UI import StartMenu, RunningMenu, EndMenu
 from GameState import GameState
+from Decorations import Grass, House
 
 DEBUG = False
+DEATH = False
 
 ENEMY_CLASSES = (Fly, OneEye, Drill, Slime, Bat)
+# ENEMY_CLASSES = (Fly, )
+
+DECOR_CLASSES = (Grass, House)
+
 
 class Game:
     def __init__(self):
@@ -25,6 +31,7 @@ class Game:
         self.floor_move_event = pygame.USEREVENT + 2
         self.score_update = pygame.USEREVENT + 3
         self.spawn_timer = pygame.USEREVENT + 4
+        self.crouch_timer = pygame.USEREVENT + 5
         self.new_game()
 
     def new_game(self):
@@ -39,11 +46,15 @@ class Game:
         self.floor.add(Floor(0))
         self.enemies = pygame.sprite.Group()
         self.ui = pygame.sprite.Group()
+        self.decorations = pygame.sprite.Group()
         # Reset timers
         pygame.time.set_timer(self.background_move_event, 0)
         pygame.time.set_timer(self.floor_move_event, 0)
         pygame.time.set_timer(self.score_update, 0)
         pygame.time.set_timer(self.spawn_timer, 0)
+        pygame.time.set_timer(self.crouch_timer, 0)
+        # Music stop
+        pygame.mixer_music.stop()
 
     def move_background(self):
         for sprite in self.background.sprites():
@@ -76,6 +87,14 @@ class Game:
             if enemy.rect.midright[0] < -20:
                 self.enemies.remove(enemy)
 
+    def spawn_decor(self):
+        if len(self.decorations.sprites()) < 1:
+            self.decorations.add(random.choice(DECOR_CLASSES)())
+            print("Decor added!")
+        for decor in self.decorations.sprites():
+            if decor.rect.midright[0] < -100:
+                self.decorations.remove(decor)
+
     def update(self):
         pygame.display.update()
         self.clock.tick(conf.FPS)
@@ -90,13 +109,19 @@ class Game:
                 self.ui.add(RunningMenu())
                 self.ui.update(self.player_instance.score)
                 self.enemies.update()
-                # for enemy in self.enemies.sprites():
-                #     if self.player_instance.rect.colliderect(enemy.rect):
-                #         self.state.next_state()
+                if DEATH:
+                    for enemy in self.enemies.sprites():
+                        if (enemy.collider_rect.collidepoint(self.player_instance.rect.midright)
+                                or enemy.collider_rect.collidepoint(self.player_instance.rect.midbottom)
+                                or enemy.collider_rect.collidepoint(self.player_instance.rect.midtop)):
+                            self.state.next_state()
+                self.spawn_decor()
+                self.decorations.update()
             case "END":
                 self.ui.empty()
                 self.player_instance.damage()
                 self.ui.add(EndMenu(self.player_instance.score))
+                pygame.mixer_music.stop()
 
     def check_events(self):
         for event in pygame.event.get():
@@ -110,8 +135,12 @@ class Game:
                 pygame.time.set_timer(self.floor_move_event, 10)
                 pygame.time.set_timer(self.score_update, 500)
                 pygame.time.set_timer(self.spawn_timer, 1500)
-                self.player_instance.running = True
+                self.player_instance.is_running = True
                 self.state.next_state()
+                # Music start
+                pygame.mixer_music.load(conf.main_music)
+                pygame.mixer_music.play()
+                pygame.mixer_music.set_volume(.02)
             if event.type == self.background_move_event and self.state.get_state() == "RUNNING":
                 self.move_background()
             if event.type == self.floor_move_event and self.state.get_state() == "RUNNING":
@@ -120,8 +149,15 @@ class Game:
                 self.update_score()
             if event.type == self.spawn_timer and self.state.get_state() == "RUNNING":
                 self.spawn_enemies()
+            if (pygame.key.get_pressed()[pygame.K_s] and not self.player_instance.is_crouching
+                    and self.state.get_state() == "RUNNING"):
+                pygame.time.set_timer(self.crouch_timer, 800)
+                self.player_instance.crouch()
+            if event.type == self.crouch_timer and self.state.get_state() == "RUNNING":
+                self.player_instance.is_crouching = False
             if pygame.key.get_pressed()[pygame.K_SPACE] and self.state.get_state() == "END":
                 self.new_game()
+
             if DEBUG:
                 if pygame.key.get_pressed()[pygame.K_q]:
                     self.new_game()
@@ -131,9 +167,16 @@ class Game:
         self.background.draw(self.screen)
         self.update_floor()
         self.floor.draw(self.screen)
+        self.decorations.draw(self.screen)
         self.ui.draw(self.screen)
         self.player.draw(self.screen)
         self.enemies.draw(self.screen)
+        if DEBUG:
+            player_coll_rect = self.player_instance.rect.copy()
+            pygame.draw.rect(self.screen, "cyan", player_coll_rect, 2)
+            for enemy in self.enemies.sprites():
+                coll_rect = enemy.collider_rect.copy()
+                pygame.draw.rect(self.screen, "pink", coll_rect, 2)
 
     def run(self):
         while True:

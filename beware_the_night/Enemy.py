@@ -37,17 +37,19 @@ SLIME_SPRITE_2 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_
 SLIME_SPRITE_3 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 3, 9),
                                         conf.INGAME_TILE_SIZE)
 BAT_SPRITE_1 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 6, 3),
-                                        conf.INGAME_TILE_SIZE)
+                                      conf.INGAME_TILE_SIZE)
 BAT_SPRITE_2 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 6, 4),
-                                        conf.INGAME_TILE_SIZE)
+                                      conf.INGAME_TILE_SIZE)
+
 
 class Enemy(pygame.sprite.Sprite):
-    def __init__(self, image_array, x_start):
+    def __init__(self, image_array, x_start, y_pos):
         super().__init__()
         self.image_array = image_array
         self.image = self.image_array[0]
         self.image.set_colorkey(conf.COLOR_TRANSPARENT)
-        self.rect = self.image.get_rect(bottomleft=(x_start, conf.ENEMY_POSITION_Y))
+        self.rect = self.image.get_rect(bottomleft=(x_start, y_pos))
+        self.collider_rect = self.rect.copy()
         self.move_sprite = 0
         self.sprite_speed = 0.2
         self.speed = 6
@@ -59,6 +61,7 @@ class Enemy(pygame.sprite.Sprite):
         self.image = self.image_array[int(self.move_sprite)]
         self.image.set_colorkey(conf.COLOR_TRANSPARENT)
         self.rect.x -= self.speed
+        self.collider_rect.x = self.rect.x
 
     def update(self):
         self.move()
@@ -67,31 +70,33 @@ class Enemy(pygame.sprite.Sprite):
 class Fly(Enemy):
     def __init__(self, x_start):
         self.image_array = [FLY_SPRITE_1, FLY_SPRITE_2]
-        super().__init__(self.image_array, x_start)
+        super().__init__(self.image_array, x_start, conf.ENEMY_POSITION_Y_FLYING)
+        self.collider_rect = pygame.rect.Rect(self.rect.topleft, conf.SMALL_COLLIDER_RECT)
 
 
 class OneEye(Enemy):
     def __init__(self, x_start):
         self.image_array = [ONEEYE_SPRITE_1, ONEEYE_SPRITE_2, ONEEYE_SPRITE_3,
                             ONEEYE_SPRITE_4, ONEEYE_SPRITE_5, ONEEYE_SPRITE_6]
-        super().__init__(self.image_array, x_start)
+        super().__init__(self.image_array, x_start, conf.ENEMY_POSITION_Y_NORMAL)
 
 
 class Drill(Enemy):
     def __init__(self, x_start):
         self.image_array = [DRILL_SPRITE_1, DRILL_SPRITE_2, DRILL_SPRITE_3,
                             DRILL_SPRITE_4, DRILL_SPRITE_5, DRILL_SPRITE_6]
-        super().__init__(self.image_array, x_start)
+        super().__init__(self.image_array, x_start, conf.ENEMY_POSITION_Y_NORMAL)
 
 
 class Slime(Enemy):
     def __init__(self, x_start):
         self.image_array = [SLIME_SPRITE_1, SLIME_SPRITE_2, SLIME_SPRITE_3, SLIME_SPRITE_2]
-        super().__init__(self.image_array, x_start)
+        super().__init__(self.image_array, x_start, conf.ENEMY_POSITION_Y_SLIME)
         self.sprite_speed = 0.1
 
 
 class Bat(Enemy):
     def __init__(self, x_start):
         self.image_array = [BAT_SPRITE_1, BAT_SPRITE_2]
-        super().__init__(self.image_array, x_start)
+        super().__init__(self.image_array, x_start, conf.ENEMY_POSITION_Y_FLYING)
+        self.collider_rect = pygame.rect.Rect(self.rect.topleft, conf.SMALL_COLLIDER_RECT)

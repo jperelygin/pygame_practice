@@ -18,11 +18,18 @@ END_SCREEN_TEXT_POSITION = (SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
 
 # player
 PLAYER_POSITION = (80, 400)
+PLAYER_CROUCH_POSITION = (80, 435)
 
 # enemies
-ENEMY_POSITION_Y = 400
+ENEMY_POSITION_Y_NORMAL = 400
 ENEMY_POSITION_X_1 = SCREEN_WIDTH + 500
 ENEMY_POSITION_X_2 = SCREEN_WIDTH + 900
+SMALL_COLLIDER_RECT = (80, 45)
+ENEMY_POSITION_Y_FLYING = 380
+ENEMY_POSITION_Y_SLIME = 435
+
+# decorations
+DECOR_START_POSITION = (SCREEN_WIDTH + 100, 400)
 
 # colors
 COLOR_LIGHT = "#e0f8d0"
@@ -33,4 +40,7 @@ COLOR_TRANSPARENT = "#66ff00"
 
 # sprites
 backgrounds = "assets/backgrounds2.png"
-sprite_sheet = "assets/gameboy_platformer_texture_closer.png"
+sprite_sheet = "assets/gameboy_platformer_texture_closer_2.png"
+
+# music
+main_music = "assets/audio_2024-02-28_21-59-03.ogg"
