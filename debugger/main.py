@@ -1,4 +1,4 @@
-import pygame
+from debugger.dbg import *
 from debugger.dbg import Debugger
 
 pygame.init()
@@ -25,7 +25,7 @@ while running:
     screen.blit(cat, (150, 20))
 
     if debug_mode == 1:
-        dbg.draw_tiles(40)
+        draw_tiles(40)
         dbg.add_message("mouse_position", pygame.mouse.get_pos())
         dbg.add_message("space_key_pressed", pygame.key.get_pressed()[pygame.K_SPACE])
         dbg.print()

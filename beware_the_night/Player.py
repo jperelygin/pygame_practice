@@ -24,6 +24,9 @@ RUN_SPRITE_3 = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SI
                                       conf.INGAME_TILE_SIZE)
 RUN_SPRITES = [RUN_SPRITE_1, RUN_SPRITE_2, RUN_SPRITE_3]
 
+DAMAGE_SPRITE = pygame.transform.scale(get_sprite(conf.sprite_sheet, conf.TILE_SIZE, 2, 5),
+                                      conf.INGAME_TILE_SIZE)
+
 
 class Player(pygame.sprite.Sprite):
     def __init__(self):
@@ -36,6 +39,7 @@ class Player(pygame.sprite.Sprite):
         self.run_sprite = 0
         self.score = 0
         self.current_position = conf.PLAYER_POSITION
+        self.health = 1
 
     def run(self):
         if self.rect.bottom >= conf.PLAYER_POSITION[1]:
@@ -61,15 +65,21 @@ class Player(pygame.sprite.Sprite):
         self.image = FALL_SPRITE
         self.image.set_colorkey(conf.COLOR_TRANSPARENT)
 
+    def damage(self):
+        self.image = DAMAGE_SPRITE
+        self.running = False
+        self.image.set_colorkey(conf.COLOR_TRANSPARENT)
+
     def input(self):
         if pygame.key.get_pressed()[pygame.K_SPACE] and self.score > 1:
             if self.running and self.rect.bottom >= conf.PLAYER_POSITION[1]:
                 self.jump()
 
     def apply_gravity(self):
-        if self.rect.bottomleft[1] > self.current_position[1]:
-            self.fall()
-        self.current_position = self.rect.bottomleft
+        if self.running:
+            if self.rect.bottomleft[1] > self.current_position[1]:
+                self.fall()
+            self.current_position = self.rect.bottomleft
         self.gravity += 1
         self.rect.y += self.gravity
         if self.rect.bottom >= conf.PLAYER_POSITION[1]:

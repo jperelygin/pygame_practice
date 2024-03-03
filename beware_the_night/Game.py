@@ -1,3 +1,5 @@
+import random
+
 import pygame
 import sys
 
@@ -5,11 +7,13 @@ import conf
 from Player import Player
 from Background import Background
 from Floor import Floor
-from Enemy import Fly, OneEye, Drill
-from UI import GameState, StartMenu, RunningMenu
+from Enemy import Fly, OneEye, Drill, Slime, Bat
+from UI import StartMenu, RunningMenu, EndMenu
+from GameState import GameState
 
 DEBUG = False
 
+ENEMY_CLASSES = (Fly, OneEye, Drill, Slime, Bat)
 
 class Game:
     def __init__(self):
@@ -20,8 +24,8 @@ class Game:
         self.background_move_event = pygame.USEREVENT + 1
         self.floor_move_event = pygame.USEREVENT + 2
         self.score_update = pygame.USEREVENT + 3
+        self.spawn_timer = pygame.USEREVENT + 4
         self.new_game()
-
 
     def new_game(self):
         self.state = GameState()
@@ -34,12 +38,12 @@ class Game:
         self.floor = pygame.sprite.Group()
         self.floor.add(Floor(0))
         self.enemies = pygame.sprite.Group()
-        self.enemies.add(Drill())
         self.ui = pygame.sprite.Group()
         # Reset timers
         pygame.time.set_timer(self.background_move_event, 0)
         pygame.time.set_timer(self.floor_move_event, 0)
         pygame.time.set_timer(self.score_update, 0)
+        pygame.time.set_timer(self.spawn_timer, 0)
 
     def move_background(self):
         for sprite in self.background.sprites():
@@ -62,29 +66,37 @@ class Game:
     def update_score(self):
         self.player_instance.score += 1
 
-    def update_ui(self):
-        self.state.next_state()
-        self.ui.empty()
+    def spawn_enemies(self):
+        # not more than 2 on screen
+        if len(self.enemies.sprites()) < 2:
+            self.enemies.add(random.choice(ENEMY_CLASSES)(
+                random.randint(conf.ENEMY_POSITION_X_1, conf.ENEMY_POSITION_X_2)))
+        # remove skipped enemies
+        for enemy in self.enemies.sprites():
+            if enemy.rect.midright[0] < -20:
+                self.enemies.remove(enemy)
 
     def update(self):
         pygame.display.update()
         self.clock.tick(conf.FPS)
-        if DEBUG:
-            pygame.display.set_caption(f"{conf.GAME_TITLE}. Score: {self.player_instance.score}")
-        else:
-            pygame.display.set_caption(conf.GAME_TITLE)
+        pygame.display.set_caption(conf.GAME_TITLE)
         self.player.update()
-        if self.player_instance.running:
-            self.enemies.update()
-        # ui
-        if self.state.get_state() == "START":
-            self.ui.add(StartMenu())
-        if self.state.get_state() == "RUNNING":
-            self.ui.add(RunningMenu())
-            self.ui.update(self.player_instance.score)
-        if self.state.get_state() == "END":
-            pass
-
+        # switch game states
+        match self.state.get_state():
+            case "START":
+                self.ui.add(StartMenu())
+            case "RUNNING":
+                self.ui.empty()
+                self.ui.add(RunningMenu())
+                self.ui.update(self.player_instance.score)
+                self.enemies.update()
+                # for enemy in self.enemies.sprites():
+                #     if self.player_instance.rect.colliderect(enemy.rect):
+                #         self.state.next_state()
+            case "END":
+                self.ui.empty()
+                self.player_instance.damage()
+                self.ui.add(EndMenu(self.player_instance.score))
 
     def check_events(self):
         for event in pygame.event.get():
@@ -92,19 +104,24 @@ class Game:
                 pygame.quit()
                 sys.exit(0)
             # GAME START
-            if pygame.key.get_pressed()[pygame.K_SPACE] and not self.player_instance.running:
+            if pygame.key.get_pressed()[pygame.K_SPACE] and self.state.get_state() == "START":
                 # Activating timers
                 pygame.time.set_timer(self.background_move_event, 200)
                 pygame.time.set_timer(self.floor_move_event, 10)
                 pygame.time.set_timer(self.score_update, 500)
+                pygame.time.set_timer(self.spawn_timer, 1500)
                 self.player_instance.running = True
-                self.update_ui()
-            if event.type == self.background_move_event and self.player_instance.running:
+                self.state.next_state()
+            if event.type == self.background_move_event and self.state.get_state() == "RUNNING":
                 self.move_background()
-            if event.type == self.floor_move_event and self.player_instance.running:
+            if event.type == self.floor_move_event and self.state.get_state() == "RUNNING":
                 self.move_floor()
-            if event.type == self.score_update and self.player_instance.running:
+            if event.type == self.score_update and self.state.get_state() == "RUNNING":
                 self.update_score()
+            if event.type == self.spawn_timer and self.state.get_state() == "RUNNING":
+                self.spawn_enemies()
+            if pygame.key.get_pressed()[pygame.K_SPACE] and self.state.get_state() == "END":
+                self.new_game()
             if DEBUG:
                 if pygame.key.get_pressed()[pygame.K_q]:
                     self.new_game()
